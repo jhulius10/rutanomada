@@ -64,4 +64,4 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
-export type AppView = 'home' | 'search' | 'results' | 'route-detail' | 'navigation' | 'assistant' | 'settings';
+export type AppView = 'home' | 'search' | 'results' | 'route-detail' | 'navigation' | 'assistant' | 'settings' | 'paywall' | 'history' | 'auth' | 'admin' | 'faq';

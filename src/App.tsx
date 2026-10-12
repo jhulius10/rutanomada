@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
-import { MapPin, Navigation, MessageCircle, Settings, Globe, X, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { MapPin, Navigation, MessageCircle, Settings, Globe, X, CheckCircle2, AlertCircle, Info, Crown } from 'lucide-react';
 import { useAppStore } from './stores/appStore';
 import { cities, coverageLabels } from './data/cities';
 import { generateRoutes } from './data/routes';
@@ -13,6 +13,12 @@ import Assistant from './components/Assistant';
 import SplashScreen from './components/SplashScreen';
 import SettingsPage from './components/SettingsPage';
 import QuickActions from './components/QuickActions';
+import Paywall from './components/Paywall';
+import HistoryFavorites from './components/HistoryFavorites';
+import AuthScreen from './components/AuthScreen';
+import AdminPanel from './components/AdminPanel';
+import FAQ from './components/FAQ';
+import { getThemeForCountry, applyThemeToCSS } from './themes/ThemeEngine';
 import { City } from './types';
 
 // Fix Leaflet default icon issue with bundlers
@@ -39,6 +45,14 @@ export default function App() {
   if (showSplash) {
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
+
+  // Apply theme based on current city
+  useEffect(() => {
+    if (currentCity) {
+      const theme = getThemeForCountry(currentCity.countryCode);
+      applyThemeToCSS(theme);
+    }
+  }, [currentCity]);
 
   // Simulate getting user location
   useEffect(() => {
@@ -83,6 +97,31 @@ export default function App() {
   // Settings view
   if (currentView === 'settings') {
     return <SettingsPage />;
+  }
+
+  // Paywall view
+  if (currentView === 'paywall') {
+    return <Paywall />;
+  }
+
+  // History/Favorites view
+  if (currentView === 'history') {
+    return <HistoryFavorites />;
+  }
+
+  // Auth view
+  if (currentView === 'auth') {
+    return <AuthScreen />;
+  }
+
+  // Admin panel view
+  if (currentView === 'admin') {
+    return <AdminPanel />;
+  }
+
+  // FAQ view
+  if (currentView === 'faq') {
+    return <FAQ />;
   }
 
   // Route detail view
@@ -198,11 +237,11 @@ export default function App() {
 
       {/* Bottom navigation */}
       <div className="absolute bottom-0 left-0 right-0 z-30 p-3 pb-2">
-        <div className="glass-effect rounded-2xl shadow-lg px-2 py-1.5 flex items-center justify-around">
-          <NavButton icon={<MapPin size={20} />} label="Mapa" active={currentView === 'home'} onClick={() => setView('home')} />
-          <NavButton icon={<Navigation size={20} />} label="Rutas" active={false} onClick={() => {}} />
-          <NavButton icon={<MessageCircle size={20} />} label="Asistente" active={false} onClick={() => setView('assistant')} />
-          <NavButton icon={<Settings size={20} />} label="Ajustes" active={false} onClick={() => setView('settings')} />
+        <div className="glass-effect rounded-2xl shadow-lg px-1 py-1.5 flex items-center justify-around">
+          <NavButton icon={<MapPin size={18} />} label="Mapa" active={currentView === 'home'} onClick={() => setView('home')} />
+          <NavButton icon={<Navigation size={18} />} label="Rutas" active={false} onClick={() => setView('history')} />
+          <NavButton icon={<MessageCircle size={18} />} label="Asistente" active={false} onClick={() => setView('assistant')} />
+          <NavButton icon={<Settings size={18} />} label="Ajustes" active={false} onClick={() => setView('settings')} />
         </div>
       </div>
     </div>
@@ -314,21 +353,48 @@ function ResultsView() {
           </div>
         </div>
 
-        {/* Premium notice */}
-        {freeQueriesRemaining <= 2 && (
+        {/* Premium notice / Paywall */}
+        {freeQueriesRemaining === 0 ? (
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-4 text-white mt-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Crown size={18} />
+              <p className="font-bold">¡Consultas agotadas!</p>
+            </div>
+            <p className="text-sm opacity-90 mb-3">
+              Has utilizado tus 5 rutas gratuitas de hoy. Sigue explorando con Premium por solo US$1/semana.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setView('paywall')}
+                className="bg-white text-amber-700 font-bold px-4 py-2 rounded-lg text-sm flex-1"
+              >
+                Activar Premium
+              </button>
+              <button
+                onClick={() => setView('home')}
+                className="bg-white/20 text-white font-medium px-4 py-2 rounded-lg text-sm"
+              >
+                Mis rutas
+              </button>
+            </div>
+          </div>
+        ) : freeQueriesRemaining <= 2 ? (
           <div className="bg-gradient-to-r from-teal-600 to-emerald-600 rounded-xl p-4 text-white mt-4">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle2 size={18} />
               <p className="font-bold">RutaNómada Premium</p>
             </div>
             <p className="text-sm opacity-90 mb-3">
-              Obtén rutas en tiempo real, alertas de servicio, navegación sin límites y más.
+              Te quedan {freeQueriesRemaining} consultas gratuitas. Obtén rutas ilimitadas con Premium.
             </p>
-            <button className="bg-white text-teal-700 font-bold px-4 py-2 rounded-lg text-sm">
-              Conocer planes desde S/ 9.90/mes
+            <button
+              onClick={() => setView('paywall')}
+              className="bg-white text-teal-700 font-bold px-4 py-2 rounded-lg text-sm"
+            >
+              Activar Premium — US$1/semana
             </button>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Bottom action */}

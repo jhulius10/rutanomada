@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe, Moon, Sun, Bell, Shield, CreditCard, HelpCircle, Star, Info, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Globe, Moon, Bell, Shield, CreditCard, HelpCircle, Star, Info, ChevronRight, Crown, Clock, ShieldCheck } from 'lucide-react';
 import { useAppStore } from '../stores/appStore';
 import { useState } from 'react';
 
@@ -93,13 +93,39 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Subscription status */}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 mx-4 mt-3 rounded-2xl shadow-sm overflow-hidden border border-amber-200">
+          <div className="p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <Crown size={20} className="text-amber-600" />
+              <div className="flex-1">
+                <p className="font-bold text-amber-900 text-sm">Plan Gratuito</p>
+                <p className="text-xs text-amber-700">5 consultas diarias</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setView('paywall')}
+              className="w-full bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold py-2.5 rounded-xl text-sm shadow-sm"
+            >
+              Mejorar a Premium — US$1/semana
+            </button>
+          </div>
+        </div>
+
+        {/* Quick access */}
+        <div className="bg-white mx-4 mt-3 rounded-2xl shadow-sm overflow-hidden">
+          <SettingRow icon={<Clock size={18} className="text-slate-600" />} label="Historial y favoritos" onClick={() => setView('history')} />
+          <SettingRow icon={<HelpCircle size={18} className="text-slate-600" />} label="Preguntas frecuentes" onClick={() => setView('faq')} />
+          <SettingRow icon={<ShieldCheck size={18} className="text-slate-600" />} label="Iniciar sesión" onClick={() => setView('auth')} />
+        </div>
+
         {/* Other options */}
         <div className="bg-white mx-4 mt-3 rounded-2xl shadow-sm overflow-hidden mb-4">
           <SettingRow icon={<CreditCard size={18} className="text-slate-600" />} label="Métodos de pago" />
           <SettingRow icon={<Shield size={18} className="text-slate-600" />} label="Privacidad y datos" />
           <SettingRow icon={<Star size={18} className="text-slate-600" />} label="Calificar la app" />
-          <SettingRow icon={<HelpCircle size={18} className="text-slate-600" />} label="Ayuda y soporte" />
           <SettingRow icon={<Info size={18} className="text-slate-600" />} label="Acerca de RutaNómada" />
+          <SettingRow icon={<Globe size={18} className="text-slate-600" />} label="Panel Admin (demo)" onClick={() => setView('admin')} />
         </div>
 
         {/* Version */}
@@ -134,9 +160,9 @@ function SettingToggle({ icon, label, description, enabled, onToggle }: {
   );
 }
 
-function SettingRow({ icon, label }: { icon: React.ReactNode; label: string }) {
+function SettingRow({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
-    <button className="flex items-center gap-3 w-full px-4 py-3 border-t border-slate-50 hover:bg-slate-50 transition-colors">
+    <button onClick={onClick} className="flex items-center gap-3 w-full px-4 py-3 border-t border-slate-50 hover:bg-slate-50 transition-colors">
       {icon}
       <span className="flex-1 text-left font-medium text-slate-700 text-sm">{label}</span>
       <ChevronRight size={16} className="text-slate-300" />
