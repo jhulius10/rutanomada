@@ -1,0 +1,151 @@
+import { City } from '../types';
+
+export const cities: City[] = [
+  {
+    id: 'lima',
+    name: 'Lima',
+    country: 'Perú',
+    countryCode: 'PE',
+    currency: 'PEN',
+    currencySymbol: 'S/',
+    language: 'es',
+    timezone: 'America/Lima',
+    center: [-12.0464, -77.0428],
+    zoom: 13,
+    coverage: 'partial',
+    providers: ['Metropolitano', 'Metro de Lima', 'Corredores Complementarios']
+  },
+  {
+    id: 'bogota',
+    name: 'Bogotá',
+    country: 'Colombia',
+    countryCode: 'CO',
+    currency: 'COP',
+    currencySymbol: '$',
+    language: 'es',
+    timezone: 'America/Bogota',
+    center: [4.7110, -74.0721],
+    zoom: 12,
+    coverage: 'complete',
+    providers: ['TransMilenio', 'SITP', 'Metro de Bogotá']
+  },
+  {
+    id: 'buenos-aires',
+    name: 'Buenos Aires',
+    country: 'Argentina',
+    countryCode: 'AR',
+    currency: 'ARS',
+    currencySymbol: '$',
+    language: 'es',
+    timezone: 'America/Argentina/Buenos_Aires',
+    center: [-34.6037, -58.3816],
+    zoom: 13,
+    coverage: 'complete',
+    providers: ['Subte', 'Colectivos', 'Premetro', 'Trenes urbanos']
+  },
+  {
+    id: 'santiago',
+    name: 'Santiago',
+    country: 'Chile',
+    countryCode: 'CL',
+    currency: 'CLP',
+    currencySymbol: '$',
+    language: 'es',
+    timezone: 'America/Santiago',
+    center: [-33.4489, -70.6693],
+    zoom: 12,
+    coverage: 'complete',
+    providers: ['Metro de Santiago', 'Transantiago/RED', 'MetroTren']
+  },
+  {
+    id: 'sao-paulo',
+    name: 'São Paulo',
+    country: 'Brasil',
+    countryCode: 'BR',
+    currency: 'BRL',
+    currencySymbol: 'R$',
+    language: 'pt',
+    timezone: 'America/Sao_Paulo',
+    center: [-23.5505, -46.6333],
+    zoom: 12,
+    coverage: 'complete',
+    providers: ['Metrô', 'CPTM', 'SPTrans']
+  },
+  {
+    id: 'quito',
+    name: 'Quito',
+    country: 'Ecuador',
+    countryCode: 'EC',
+    currency: 'USD',
+    currencySymbol: '$',
+    language: 'es',
+    timezone: 'America/Guayaquil',
+    center: [-0.1807, -78.4678],
+    zoom: 13,
+    coverage: 'partial',
+    providers: ['Metro de Quito', 'Ecovía', 'Trolebús']
+  },
+  {
+    id: 'caracas',
+    name: 'Caracas',
+    country: 'Venezuela',
+    countryCode: 'VE',
+    currency: 'VES',
+    currencySymbol: 'Bs.',
+    language: 'es',
+    timezone: 'America/Caracas',
+    center: [10.4806, -66.9036],
+    zoom: 13,
+    coverage: 'walking-only',
+    providers: ['Metro de Caracas']
+  },
+  {
+    id: 'la-paz',
+    name: 'La Paz',
+    country: 'Bolivia',
+    countryCode: 'BO',
+    currency: 'BOB',
+    currencySymbol: 'Bs.',
+    language: 'es',
+    timezone: 'America/La_Paz',
+    center: [-16.4897, -68.1193],
+    zoom: 13,
+    coverage: 'partial',
+    providers: ['Mi Teleférico', 'Buses urbanos']
+  },
+  {
+    id: 'montevideo',
+    name: 'Montevideo',
+    country: 'Uruguay',
+    countryCode: 'UY',
+    currency: 'UYU',
+    currencySymbol: '$U',
+    language: 'es',
+    timezone: 'America/Montevideo',
+    center: [-34.9011, -56.1645],
+    zoom: 13,
+    coverage: 'partial',
+    providers: ['STM', 'Cutcsa']
+  },
+  {
+    id: 'asuncion',
+    name: 'Asunción',
+    country: 'Paraguay',
+    countryCode: 'PY',
+    currency: 'PYG',
+    currencySymbol: '₲',
+    language: 'es',
+    timezone: 'America/Asuncion',
+    center: [-25.2637, -57.5759],
+    zoom: 13,
+    coverage: 'walking-only',
+    providers: ['Transporte urbano informal']
+  }
+];
+
+export const coverageLabels: Record<string, { label: string; color: string; emoji: string }> = {
+  complete: { label: 'Cobertura completa', color: 'text-emerald-600', emoji: '✅' },
+  partial: { label: 'Cobertura parcial', color: 'text-amber-600', emoji: '⚠️' },
+  'walking-only': { label: 'Solo rutas peatonales', color: 'text-orange-600', emoji: '🚶' },
+  none: { label: 'Sin datos disponibles', color: 'text-red-600', emoji: '❌' }
+};
