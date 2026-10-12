@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import L from 'leaflet';
 import { MapPin, Navigation, MessageCircle, Settings, Globe, X, CheckCircle2, AlertCircle, Info, Crown } from 'lucide-react';
 import { useAppStore } from './stores/appStore';
@@ -22,12 +22,22 @@ import { getThemeForCountry, applyThemeToCSS } from './themes/ThemeEngine';
 import { City } from './types';
 
 // Fix Leaflet default icon issue with bundlers
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-});
+if (typeof window !== 'undefined' && L.Icon && L.Icon.Default) {
+  try {
+    // @ts-ignore
+    if (L.Icon.Default.prototype._getIconUrl) {
+      // @ts-ignore
+      delete L.Icon.Default.prototype._getIconUrl;
+    }
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+  } catch (e) {
+    console.warn('Leaflet icon fix failed:', e);
+  }
+}
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
@@ -42,9 +52,10 @@ export default function App() {
     freeQueriesRemaining, decrementQueries,
   } = useAppStore();
 
-  if (showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} />;
-  }
+  // ALL HOOKS MUST BE BEFORE ANY CONDITIONAL RETURN
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+  }, []);
 
   // Apply theme based on current city
   useEffect(() => {
@@ -54,7 +65,7 @@ export default function App() {
     }
   }, [currentCity]);
 
-  // Simulate getting user location
+  // Get user location
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -83,6 +94,12 @@ export default function App() {
       decrementQueries();
     }
   }, [selectedDestination, currentView]);
+
+  // === NOW CONDITIONAL RENDERS ===
+
+  if (showSplash) {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
 
   // Navigation view
   if (currentView === 'navigation') {
@@ -250,13 +267,17 @@ export default function App() {
 
 function CityItem({ city, onSelect }: { city: City; onSelect: (city: City) => void }) {
   const coverage = coverageLabels[city.coverage];
+  const flagEmoji: Record<string, string> = {
+    PE: '🇵🇪', CO: '🇨🇴', AR: '🇦🇷', CL: '🇨🇱', BR: '🇧🇷',
+    EC: '🇪🇨', VE: '🇻🇪', BO: '🇧🇴', UY: '🇺🇾', PY: '🇵🇾'
+  };
   return (
     <button
       onClick={() => onSelect(city)}
       className="flex items-center gap-3 w-full p-3 rounded-xl hover:bg-teal-50 transition-colors text-left"
     >
       <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-lg">
-        {city.countryCode === 'PE' ? '🇵🇪' : city.countryCode === 'CO' ? '🇨🇴' : city.countryCode === 'AR' ? '🇦🇷' : city.countryCode === 'CL' ? '🇨🇱' : city.countryCode === 'BR' ? '🇧🇷' : city.countryCode === 'EC' ? '🇪🇨' : city.countryCode === 'VE' ? '🇻🇪' : city.countryCode === 'BO' ? '🇧🇴' : city.countryCode === 'UY' ? '🇺🇾' : '🇵🇾'}
+        {flagEmoji[city.countryCode] || '🌍'}
       </div>
       <div className="flex-1 min-w-0">
         <p className="font-medium text-slate-800">{city.name}</p>
@@ -346,7 +367,7 @@ function ResultsView() {
             <div>
               <p className="text-sm font-medium text-amber-800">Importante sobre los datos</p>
               <p className="text-xs text-amber-700 mt-1">
-                Las rutas mostradas se basan en datos de horarios programados y estimaciones. Los tiempos de espera pueden variar. 
+                Las rutas mostradas se basan en datos de horarios programados y estimaciones. Los tiempos de espera pueden variar.
                 Las tarifas del transporte informal pueden cambiar sin aviso.
               </p>
             </div>

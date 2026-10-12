@@ -16,41 +16,81 @@ const touristMarkers = [
 export default function MapView() {
   const mapRef = useRef<L.Map | null>(null);
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<L.Marker[]>([]);
   const { userLocation, currentCity, selectedDestination, selectedRoute } = useAppStore();
 
+  // Initialize map
   useEffect(() => {
-    if (!mapContainerRef.current || mapRef.current) return;
+    if (!mapContainerRef.current) return;
+    
+    // Prevent double initialization
+    if (mapRef.current) return;
 
     const center: [number, number] = currentCity?.center || [-12.0464, -77.0428];
     const zoom = currentCity?.zoom || 13;
 
-    mapRef.current = L.map(mapContainerRef.current, {
-      center,
-      zoom,
-      zoomControl: false,
-      attributionControl: false,
-    });
+    try {
+      const map = L.map(mapContainerRef.current, {
+        center,
+        zoom,
+        zoomControl: false,
+        attributionControl: false,
+      });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      maxZoom: 19,
-    }).addTo(mapRef.current);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19,
+        subdomains: 'abcd',
+      }).addTo(map);
 
-    L.control.zoom({ position: 'bottomright' }).addTo(mapRef.current);
+      L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
+      mapRef.current = map;
+
+      // Add tourist markers
+      touristMarkers.forEach((spot) => {
+        const icon = L.divIcon({
+          className: 'tourist-marker',
+          html: `<div style="width:28px;height:28px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);font-size:14px;border:2px solid #e2e8f0;">${spot.icon}</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        });
+        const marker = L.marker(spot.coords, { icon })
+          .bindPopup(`<strong>${spot.name}</strong>`)
+          .addTo(map);
+        markersRef.current.push(marker);
+      });
+
+      // Handle resize
+      const handleResize = () => {
+        map.invalidateSize();
+      };
+      window.addEventListener('resize', handleResize);
+      
+      // Invalidate size after mount
+      setTimeout(() => map.invalidateSize(), 100);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        markersRef.current = [];
+        map.remove();
         mapRef.current = null;
-      }
-    };
+      };
+    } catch (e) {
+      console.error('Map initialization error:', e);
+    }
   }, []);
 
+  // Update map center when city changes
   useEffect(() => {
-    if (!mapRef.current) return;
-    const center: [number, number] = currentCity?.center || [-12.0464, -77.0428];
-    mapRef.current.setView(center, currentCity?.zoom || 13);
+    if (!mapRef.current || !currentCity) return;
+    try {
+      mapRef.current.setView(currentCity.center, currentCity.zoom);
+    } catch (e) {
+      console.error('Map view update error:', e);
+    }
   }, [currentCity]);
 
+  // User location marker
   useEffect(() => {
     if (!mapRef.current || !userLocation) return;
 
@@ -61,10 +101,17 @@ export default function MapView() {
       iconAnchor: [10, 10],
     });
 
-    const marker = L.marker(userLocation, { icon: userIcon }).addTo(mapRef.current);
-    return () => { mapRef.current?.removeLayer(marker); };
+    try {
+      const marker = L.marker(userLocation, { icon: userIcon }).addTo(mapRef.current);
+      return () => { 
+        try { mapRef.current?.removeLayer(marker); } catch(e) {}
+      };
+    } catch (e) {
+      console.error('User marker error:', e);
+    }
   }, [userLocation]);
 
+  // Destination marker
   useEffect(() => {
     if (!mapRef.current || !selectedDestination) return;
 
@@ -75,33 +122,28 @@ export default function MapView() {
       iconAnchor: [16, 32],
     });
 
-    const marker = L.marker(selectedDestination.coords, { icon: destIcon }).addTo(mapRef.current);
-    return () => { mapRef.current?.removeLayer(marker); };
+    try {
+      const marker = L.marker(selectedDestination.coords, { icon: destIcon }).addTo(mapRef.current);
+      
+      // Fit bounds to show both user and destination
+      if (userLocation) {
+        const bounds = L.latLngBounds([userLocation, selectedDestination.coords]);
+        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      } else {
+        mapRef.current.setView(selectedDestination.coords, 14);
+      }
+      
+      return () => { 
+        try { mapRef.current?.removeLayer(marker); } catch(e) {}
+      };
+    } catch (e) {
+      console.error('Destination marker error:', e);
+    }
   }, [selectedDestination]);
 
-  // Add tourist attraction markers
+  // Route polyline
   useEffect(() => {
-    if (!mapRef.current) return;
-    const markers: L.Marker[] = [];
-
-    touristMarkers.forEach((spot) => {
-      const icon = L.divIcon({
-        className: 'tourist-marker',
-        html: `<div style="width:28px;height:28px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.2);font-size:14px;border:2px solid #e2e8f0;">${spot.icon}</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
-      });
-      const marker = L.marker(spot.coords, { icon })
-        .bindPopup(`<strong>${spot.name}</strong>`)
-        .addTo(mapRef.current!);
-      markers.push(marker);
-    });
-
-    return () => { markers.forEach(m => mapRef.current?.removeLayer(m)); };
-  }, [currentCity]);
-
-  useEffect(() => {
-    if (!mapRef.current || !selectedRoute || !userLocation || !selectedDestination) return;
+    if (!mapRef.current || !selectedRoute) return;
 
     const allCoords: [number, number][] = [];
 
@@ -114,19 +156,30 @@ export default function MapView() {
     });
 
     if (allCoords.length < 2) {
-      allCoords.push(userLocation, selectedDestination.coords);
+      if (userLocation) allCoords.push(userLocation);
+      if (selectedDestination) allCoords.push(selectedDestination.coords);
     }
 
-    const polyline = L.polyline(allCoords, {
-      color: '#0f766e',
-      weight: 5,
-      opacity: 0.8,
-    }).addTo(mapRef.current);
+    if (allCoords.length >= 2) {
+      try {
+        const polyline = L.polyline(allCoords, {
+          color: '#0f766e',
+          weight: 5,
+          opacity: 0.8,
+        }).addTo(mapRef.current);
 
-    return () => { mapRef.current?.removeLayer(polyline); };
+        mapRef.current.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+
+        return () => { 
+          try { mapRef.current?.removeLayer(polyline); } catch(e) {}
+        };
+      } catch (e) {
+        console.error('Polyline error:', e);
+      }
+    }
   }, [selectedRoute]);
 
   return (
-    <div ref={mapContainerRef} className="w-full h-full" />
+    <div ref={mapContainerRef} className="w-full h-full" style={{ minHeight: '100%' }} />
   );
 }

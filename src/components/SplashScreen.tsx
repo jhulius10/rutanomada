@@ -1,21 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { MapPin, Bus, Navigation, Globe } from 'lucide-react';
 
-export default function SplashScreen({ onComplete }: { onComplete: () => void }) {
-  const [progress, setProgress] = useState(0);
+interface Props {
+  onComplete: () => void;
+}
 
+export default function SplashScreen({ onComplete }: Props) {
   useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(onComplete, 300);
-          return 100;
-        }
-        return prev + 4;
-      });
-    }, 50);
-    return () => clearInterval(interval);
+    // Complete after 2 seconds
+    const timer = setTimeout(() => {
+      onComplete();
+    }, 2000);
+    
+    return () => clearTimeout(timer);
   }, [onComplete]);
 
   return (
@@ -46,12 +43,9 @@ export default function SplashScreen({ onComplete }: { onComplete: () => void })
           Tu guía de transporte público
         </p>
 
-        {/* Progress bar */}
+        {/* Loading indicator */}
         <div className="w-48 h-1.5 bg-white/20 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-white rounded-full transition-all duration-100"
-            style={{ width: `${progress}%` }}
-          />
+          <div className="h-full bg-white rounded-full animate-pulse" style={{ width: '100%' }} />
         </div>
 
         <div className="flex items-center gap-4 mt-6 text-white/60">
